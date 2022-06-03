@@ -56,7 +56,7 @@ public class Donate extends AppCompatActivity implements OnMapReadyCallback, Goo
     LocationRequest mLocationRequest;
     private int REQUEST_CODE = 11;
     SupportMapFragment mapFragment;
-    TextInputLayout nameError, phoneError;
+    TextInputLayout nameError, phoneError,descriptionError;
     EditText mFullName, mDescription, mPhone;
     Chip clothChip, shoeChip, foodChip, bookChip, otherChip;
     Button mSubmitBtn;
@@ -72,6 +72,7 @@ public class Donate extends AppCompatActivity implements OnMapReadyCallback, Goo
         setContentView(R.layout.activity_donate);
         mFullName = findViewById(R.id.donorname);
         clothChip = findViewById(R.id.clothChip);
+        descriptionError = findViewById(R.id.descriptionError);
         shoeChip = findViewById(R.id.shoeChip);
         bookChip = findViewById(R.id.bookChip);
         otherChip = findViewById(R.id.otherChip);
@@ -233,6 +234,10 @@ public class Donate extends AppCompatActivity implements OnMapReadyCallback, Goo
                 }
                 if (TextUtils.isEmpty(phone)) {
                     phoneError.setError("Phone Number is required");
+                    return;
+                }
+                if (TextUtils.isEmpty(description)) {
+                    descriptionError.setError("Description is required");
                     return;
                 }
                 if (phone.length() < 10) {

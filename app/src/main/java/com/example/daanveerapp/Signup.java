@@ -1,21 +1,23 @@
 package com.example.daanveerapp;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
@@ -27,7 +29,9 @@ import java.util.Map;
 
 public class Signup extends AppCompatActivity {
     public static final String TAG = "TAG";
-    EditText mFullName,mEmail,mPassword,mPhone;
+    EditText mFullName, mEmail, mPassword, mPhone;
+    TextInputLayout nameError, phoneError, emailError, passwordError;
+
     Button mRegisterBtn;
     TextView mLoginBtn;
     FirebaseAuth fAuth;
@@ -42,14 +46,18 @@ public class Signup extends AppCompatActivity {
         mFullName = findViewById(R.id.name);
         mEmail = findViewById(R.id.email);
         mPassword = findViewById(R.id.password);
+        nameError = findViewById(R.id.nameError);
+        phoneError = findViewById(R.id.phoneError);
+        emailError = findViewById(R.id.emailError);
+        passwordError = findViewById(R.id.passError);
         mPhone = findViewById(R.id.phone);
-        mRegisterBtn=findViewById(R.id.register);
+        mRegisterBtn = findViewById(R.id.register);
         mLoginBtn = findViewById(R.id.login);
 
-        fAuth=FirebaseAuth.getInstance();
-        fStore=FirebaseFirestore.getInstance();
+        fAuth = FirebaseAuth.getInstance();
+        fStore = FirebaseFirestore.getInstance();
 
-        if(fAuth.getCurrentUser() !=null){
+        if (fAuth.getCurrentUser() != null) {
             //startActivity(new Intent(getApplicationContext(),MainActivity.class));
             //finish();
             Intent intent = new Intent(Signup.this, MainActivity.class);
@@ -57,59 +65,71 @@ public class Signup extends AppCompatActivity {
             startActivity(intent);
         }
 
-        mRegisterBtn.setOnClickListener(new View.OnClickListener ()
-        {
+        mRegisterBtn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
+            public void onClick(View v) {
                 String email = mEmail.getText().toString().trim();
-                String password= mPassword.getText().toString().trim();
-                String name= mFullName.getText().toString().trim();
-                String phone= mPhone.getText().toString().trim();
+                String password = mPassword.getText().toString().trim();
+                String name = mFullName.getText().toString().trim();
+                String phone = mPhone.getText().toString().trim();
 
-                if(TextUtils.isEmpty(email))
-                {
-                    mEmail.setError("Email is Required.");
+                if (TextUtils.isEmpty(name)) {
+                    nameError.setError("Name is Required.");
+                    return;
+                }
+                if (TextUtils.isEmpty(email)) {
+                    emailError.setError("Email is Required.");
+                    return;
+                }
+                if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    emailError.setError("Email is invalid.");
                     return;
                 }
 
-                if(TextUtils.isEmpty(password))
-                {
-                    mPassword.setError("Password is Required.");
+                if (TextUtils.isEmpty(phone)) {
+                    phoneError.setError("Phone Number is Required.");
                     return;
                 }
 
-                if(password.length() < 6)
-                {
-                    mPassword.setError("Password Must be >=6 Characters");
+                if (phone.length() < 10) {
+                    phoneError.setError("Phone Number is invalid.");
                     return;
                 }
 
-                fAuth.createUserWithEmailAndPassword(email,password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                if (TextUtils.isEmpty(password)) {
+                    passwordError.setError("Password is Required.");
+                    return;
+                }
+
+                if (password.length() < 6) {
+                    passwordError.setError("Password Must be >=6 Characters");
+                    return;
+                }
+
+                fAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
-                        if(task.isSuccessful()){
-                            Toast.makeText(Signup.this, "User Created.", Toast.LENGTH_SHORT) .show();
+                        if (task.isSuccessful()) {
+                            Toast.makeText(Signup.this, "User Created.", Toast.LENGTH_SHORT).show();
                             userID = fAuth.getCurrentUser().getUid();
                             DocumentReference documentReference = fStore.collection("users").document(userID);
-                            Map<String,Object> user = new HashMap<>();
-                            user.put("name",name);
-                            user.put("email",email);
-                            user.put("phone",phone);
+                            Map<String, Object> user = new HashMap<>();
+                            user.put("name", name);
+                            user.put("email", email);
+                            user.put("phone", phone);
                             documentReference.set(user).addOnSuccessListener(new OnSuccessListener<Void>() {
                                 @Override
                                 public void onSuccess(Void aVoid) {
-                                    Log.d(TAG,"onSuccess: user Profile is created for "+ userID);
-                                    Toast.makeText(Signup.this, "Registered Successfully.", Toast.LENGTH_SHORT) .show();
+                                    Log.d(TAG, "onSuccess: user Profile is created for " + userID);
+                                    Toast.makeText(Signup.this, "Registered Successfully.", Toast.LENGTH_SHORT).show();
                                 }
                             });
                             //startActivity(new Intent(getApplicationContext(),MainActivity.class));
                             Intent intent = new Intent(Signup.this, MainActivity.class);
                             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                             startActivity(intent);
-                        }
-                        else{
-                            Toast.makeText(Signup.this, "Error!" + task.getException().getMessage(),Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(Signup.this, "Error!" + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     }
                 });

@@ -1,11 +1,5 @@
 package com.example.daanveerapp;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-
 import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -20,6 +14,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
@@ -32,6 +32,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
@@ -50,7 +51,9 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
     LocationRequest mLocationRequest;
     private int REQUEST_CODE = 11;
     SupportMapFragment mapFragment;
-    EditText mFullName,mDescription;
+    EditText mFullName, mDescription, mPhone;
+    TextInputLayout nameError, phoneError, descriptionError;
+
     Button mSubmitBtn;
     FirebaseAuth fAuth;
     FirebaseFirestore fStore;
@@ -63,10 +66,14 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
         setContentView(R.layout.activity_receive);
         mFullName = findViewById(R.id.receivername);
         mDescription = findViewById(R.id.description);
-        mSubmitBtn=findViewById(R.id.submit);
+        nameError = findViewById(R.id.nameError);
+        descriptionError = findViewById(R.id.descriptionError);
+        phoneError = findViewById(R.id.phoneError);
+        mPhone = findViewById(R.id.phone);
+        mSubmitBtn = findViewById(R.id.submit);
 
-        fAuth=FirebaseAuth.getInstance();
-        fStore= FirebaseFirestore.getInstance();
+        fAuth = FirebaseAuth.getInstance();
+        fStore = FirebaseFirestore.getInstance();
 
         mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.google_map);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -82,8 +89,8 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         buildGoogleApiClient();
-        final LocationManager manager = (LocationManager) getSystemService( LOCATION_SERVICE );
-        if ( !manager.isProviderEnabled( LocationManager.GPS_PROVIDER ) ) {
+        final LocationManager manager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             buildAlertMessageNoGps();
         }
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -92,7 +99,7 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
         mMap.setMyLocationEnabled(true);
     }
 
-    protected synchronized void buildGoogleApiClient(){
+    protected synchronized void buildGoogleApiClient() {
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -100,6 +107,7 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
                 .build();
         mGoogleApiClient.connect();
     }
+
     private void buildAlertMessageNoGps() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
@@ -121,7 +129,7 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
     @Override
     public void onLocationChanged(@NonNull Location location) {
         mLastLocation = location;
-        LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude());
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
 
         //MarkerOptions markerOptions1 = new MarkerOptions().position(latLng).title("You are here");
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
@@ -129,24 +137,31 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
         //mMap.addMarker(markerOptions1).showInfoWindow();
 
         MarkerOptions markerOptions = new MarkerOptions().position(latLng).title("You are here");
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,15));
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
         mMap.addMarker(markerOptions).showInfoWindow();
 
         mSubmitBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String fullname = mFullName.getText().toString().trim();
-                String description= mDescription.getText().toString().trim();
-                String type= "Receiver";
+                String description = mDescription.getText().toString().trim();
+                String phone = mPhone.getText().toString().trim();
+                String type = "Receiver";
 
-                if(TextUtils.isEmpty(fullname))
-                {
-                    mFullName.setError("Name is Required.");
+                if (TextUtils.isEmpty(fullname)) {
+                    nameError.setError("Name is Required.");
                     return;
                 }
-                if(TextUtils.isEmpty(description))
-                {
-                    mFullName.setError("Description is Required.");
+                if (TextUtils.isEmpty(description)) {
+                    descriptionError.setError("Description is Required.");
+                    return;
+                }
+                if (TextUtils.isEmpty(phone)) {
+                    phoneError.setError("Phone is Required.");
+                    return;
+                }
+                if (phone.length()<10) {
+                    phoneError.setError("Phone Number is Invalid.");
                     return;
                 }
 
@@ -155,21 +170,22 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
                 //DocumentReference documentReference = fStore.collection("receiver").document(userID);
                 CollectionReference collectionReference = fStore.collection("user data");
 
-                GeoPoint geoPoint = new GeoPoint(location.getLatitude(),location.getLongitude());
-                Map<String,Object> user = new HashMap<>();
+                GeoPoint geoPoint = new GeoPoint(location.getLatitude(), location.getLongitude());
+                Map<String, Object> user = new HashMap<>();
                 user.put("timestamp", FieldValue.serverTimestamp());
-                user.put("name",fullname);
-                user.put("description",description);
-                user.put("location",geoPoint);
-                user.put("userid",userID);
-                user.put("type",type);
+                user.put("name", fullname);
+                user.put("description", description);
+                user.put("phone", phone);
+                user.put("location", geoPoint);
+                user.put("userid", userID);
+                user.put("type", type);
 
                 collectionReference.add(user)
                         .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
                             @Override
                             public void onSuccess(DocumentReference documentReference) {
-                                Toast.makeText(getApplicationContext(),"Success!",Toast.LENGTH_SHORT).show();
-                                Log.d(TAG,"Success!");
+                                Toast.makeText(getApplicationContext(), "Success!", Toast.LENGTH_SHORT).show();
+                                Log.d(TAG, "Success!");
                                 //startActivity(new Intent(getApplicationContext(),MainActivity.class));
                                 Intent intent = new Intent(Receive.this, MainActivity.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -179,7 +195,7 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
                         .addOnFailureListener(new OnFailureListener() {
                             @Override
                             public void onFailure(@NonNull Exception e) {
-                                Toast.makeText(getApplicationContext(),"Error!",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(), "Error!", Toast.LENGTH_SHORT).show();
                                 Log.w(TAG, "Error!", e);
                             }
                         });
@@ -210,14 +226,15 @@ public class Receive extends AppCompatActivity implements OnMapReadyCallback, Go
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 
-        if (requestCode == REQUEST_CODE){
-            if(grantResults.length > 0 && grantResults[0]  == PackageManager.PERMISSION_GRANTED){
+        if (requestCode == REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 mapFragment.getMapAsync(this);
-            }else{
-                Toast.makeText(this,"Permission Denied", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Permission Denied", Toast.LENGTH_SHORT).show();
             }
         }
     }

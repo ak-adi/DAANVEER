@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "153017415171",
+    "firebase_url": "https://daanveer-35165-default-rtdb.firebaseio.com",
+    "project_id": "daanveer-35165",
+    "storage_bucket": "daanveer-35165.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:153017415171:android:bf52f871c17885ca03c036",
+        "android_client_info": {
+          "package_name": "com.example.daanveerapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "153017415171-b047vu38bto58kffaem148snrrd4lmnp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.daanveerapp",
+            "certificate_hash": "c1693f2da2f03c6ae3c528bc1eb45de96e0db854"
+          }
+        },
+        {
+          "client_id": "153017415171-2hkl75ledbm3kr6dsjv0c6med7h76i2c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADdWc5Xdi7u75bxlldQWfYaZO5Ag6xPcg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "153017415171-2hkl75ledbm3kr6dsjv0c6med7h76i2c.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
